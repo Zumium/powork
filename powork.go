@@ -10,8 +10,9 @@ import "time"
 // Worker represents an object that calculates proofs of work and verifies them.
 type Worker struct {
 	difficulty int
-	getHash    func() hash.Hash
-	maxWait    int
+	// getHash    func() hash.Hash
+	hasher  hash.Hash
+	maxWait int
 }
 
 // A PoWork represents a (potentially valid) proof of work for a given message
@@ -44,11 +45,12 @@ func (p *PoWork) GetMessageString() string {
 
 // NewWorker creates a new Worker with sensible defaults: SHA512, 10 bit difficulty, and a 5 second timeout.
 func NewWorker() *Worker {
-	pw := new(Worker)
-	pw.difficulty = 10
-	pw.getHash = sha512.New
-	pw.maxWait = 5000
-	return pw
+	w := new(Worker)
+	w.difficulty = 10
+	// pw.getHash = sha512.New
+	w.hasher = sha512.New()
+	w.maxWait = 5000
+	return w
 }
 
 // SetDifficulty sets the difficulty of the proof calculated. A higher value represents a more difficult proof. Increases exponentially.
@@ -71,9 +73,9 @@ func (p *Worker) SetTimeout(milliseconds int) error {
 	return nil
 }
 
-// SetHashGetter sets the hash function that the Worker will use
-func (p *Worker) SetHashGetter(h func() hash.Hash) {
-	p.getHash = h
+// SetHasher sets the hash object that the Worker will use
+func (p *Worker) SetHasher(h hash.Hash) {
+	p.hasher = h
 }
 
 // PrepareProof starts working on creating a proof of work for the passed message and
@@ -157,20 +159,20 @@ func (p *Worker) DoProofFor(msg []byte) (*PoWork, error) {
 // true is returned. Otherwise, false. If true is returned, then the
 // error returned must be nil.
 func (p *Worker) ValidatePoWork(pow *PoWork) (bool, error) {
-	hash := p.getHash()
+	// hash := p.getHash()
 
-	hash.Reset()
-	_, err := hash.Write(pow.msg)
+	p.hasher.Reset()
+	_, err := p.hasher.Write(pow.msg)
 	if err != nil {
 		return false, err
 	}
 
-	err = binary.Write(hash, binary.LittleEndian, pow.proof)
+	err = binary.Write(p.hasher, binary.LittleEndian, pow.proof)
 	if err != nil {
 		return false, err
 	}
 
-	sum := hash.Sum(nil)
+	sum := p.hasher.Sum(nil)
 	// validate that the first N bits of the sum are 0, where N = p.difficulty
 	N := p.difficulty
 	for _, x := range sum {
