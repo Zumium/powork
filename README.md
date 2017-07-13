@@ -4,21 +4,23 @@ PoWork
 A simple proof of work library for Golang
 -----------------------------------------
 
+__This is from bitbucket.org/RyanMarcus/powork originally__
+
 ** PoWork v0.1 **
 
 PoWork provides a solution-verification based [proof of work system](http://en.wikipedia.org/wiki/Proof-of-work_system) that uses a probabilistic iteration method, similar to the ever-popular [Hashcash](http://hashcash.org). The library seeks to provide an abstracted interface to users seeking to use proof of work systems.
 
-Full documentation can be found [on GoDoc](http://godoc.org/bitbucket.org/RyanMarcus/powork).
+Full documentation can be found [on GoDoc](http://godoc.org/github.com/Zumium/powork).
 
 
 You can import it with
 	
-	import "bitbucket.org/RyanMarcus/powork"
+	import "github.com/Zumium/powork"
 	
 
 To create a proof-of-work:
 
-	worker := powork.NewPoWorkWorker()
+	worker := powork.NewWorker()
 	messageToProve := "I'll prove I did some work with this very message!"
 
 	// proof will contain both the message and the proof of work
@@ -46,7 +48,7 @@ To use a different hash function (default: SHA512):
 	// use the MD5 hash function (for example)
 	// the default is SHA512
 	// you'll need to import MD5 with: import "crypto/md5"
-	worker.SetHashGetter(md5.New)
+	worker.SetHasher(md5.New())
 
 	// do a proof with the MD5 hash function
 	proof, _ = worker.DoProofForString(messageToProve)
@@ -61,7 +63,7 @@ To change the default timeout (default: 5 seconds)
 
 You can also use PoWork asynchronously by having PoWork return a channel:
 
-	worker := NewPoWorkWorker()
+	worker := NewWorker()
 	messageToProve := []byte("This time with channels!")
 
 	// returns a channel that will eventually get the proof
@@ -84,7 +86,7 @@ You can also use PoWork asynchronously by having PoWork return a channel:
 
 You can also have PoWork send multiple proofs to the same channel:
 
-	worker := powork.NewPoWorkWorker()
+	worker := powork.NewWorker()
 	messageToProve := []byte("Will send a proof of this message to a channel")
 	
 	c := powork.GetChannel(20)
