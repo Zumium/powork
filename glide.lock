@@ -1,0 +1,8 @@
+hash: 4243b61447be6c238c3e276ab2546c68601d6908a6c29ebf5ef0c56b63ed2ed0
+updated: 2017-07-13T17:07:28.33067565+08:00
+imports:
+- name: golang.org/x/crypto
+  version: dd85ac7e6a88fc6ca420478e934de5f1a42dd3c6
+  subpackages:
+  - sha3
+testImports: []

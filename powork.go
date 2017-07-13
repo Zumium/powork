@@ -1,11 +1,14 @@
 //Package powork provides an easy-to-use proof of work library for golang
 package powork
 
-import "crypto/sha512"
-import "hash"
-import "encoding/binary"
-import "errors"
-import "time"
+import (
+	"encoding/binary"
+	"errors"
+	"hash"
+	"time"
+
+	"golang.org/x/crypto/sha3"
+)
 
 // Worker represents an object that calculates proofs of work and verifies them.
 type Worker struct {
@@ -48,7 +51,7 @@ func NewWorker() *Worker {
 	w := new(Worker)
 	w.difficulty = 10
 	// pw.getHash = sha512.New
-	w.hasher = sha512.New()
+	w.hasher = sha3.New512() // SHA3-512 by default
 	w.maxWait = 5000
 	return w
 }
