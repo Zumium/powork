@@ -205,7 +205,8 @@ func TestCustomTimeout(t *testing.T) {
 
 func TestCustomHash(t *testing.T) {
 	toR := NewWorker()
-	toR.SetHashGetter(md5.New)
+	toR.SetHasher(md5.New())
+	// toR.SetHashGetter(md5.New)
 
 	s := "A test message for MD5"
 	res, err := toR.DoProofFor([]byte(s))
