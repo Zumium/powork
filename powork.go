@@ -46,9 +46,9 @@ func (p *PoWork) GetMessageString() string {
 	return string(p.msg)
 }
 
-// NewWorker creates a new Worker with sensible defaults: SHA512, 10 bit difficulty, and a 5 second timeout.
+// NewWorker creates a new Worker with sensible defaults: SHA3-512, 10 bit difficulty, and a 5 second timeout.
 func NewWorker() *Worker {
-	return NewWorkerWithHash(sha3.New256()) // SHA3-256 by default
+	return NewWorkerWithHash(sha3.New512()) // SHA3-512 by default
 }
 
 // NewWorkerWithHash creates a new worker with given hash
