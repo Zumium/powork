@@ -21,7 +21,7 @@ type Worker struct {
 // A PoWork represents a (potentially valid) proof of work for a given message
 type PoWork struct {
 	msg                []byte
-	proof              int64
+	proof              uint64
 	requiredIterations int
 }
 
