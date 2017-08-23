@@ -3,6 +3,7 @@ package powork
 import "testing"
 import "time"
 import "crypto/md5"
+import "golang.org/x/net/context"
 
 func TestDefaultPoWork(t *testing.T) {
 	toR := NewWorker()
@@ -286,6 +287,43 @@ func TestMessageGetter(t *testing.T) {
 		t.Logf("The proven message is: %v\n", proof.GetMessageString())
 	} else {
 		t.Fatalf("Proof did not validate!")
+	}
+}
+
+func TestCancelCalculationPerpareProof(t *testing.T) {
+	worker := NewWorker()
+	messageToProve := []byte("I'll prove I did some work with this very message!")
+
+	worker.SetDifficulty(30)
+
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	out := worker.PrepareProofWithContext(ctx, messageToProve)
+	<-time.After(time.Second)
+	cancelFunc()
+	r := <-out
+	if r.error != context.Canceled {
+		t.Fatal("error type wrong")
+	}
+}
+
+func TestCancelCalculationSendProof(t *testing.T) {
+	worker := NewWorker()
+	messageToProve := []byte("I'll prove I did some work with this very message!")
+
+	worker.SetDifficulty(30)
+
+	out := make(chan struct {
+		*PoWork
+		error
+	}, 1)
+	defer close(out)
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	worker.SendProofToChannelWithContext(ctx, messageToProve, out)
+	<-time.After(time.Second)
+	cancelFunc()
+	r := <-out
+	if r.error != context.Canceled {
+		t.Fatal("error type wrong")
 	}
 }
 

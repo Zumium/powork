@@ -2,6 +2,7 @@
 package powork
 
 import (
+	"context"
 	"encoding/binary"
 	"errors"
 	"hash"
@@ -91,6 +92,14 @@ func (p *Worker) PrepareProof(msg []byte) chan struct {
 	*PoWork
 	error
 } {
+	return p.PrepareProofWithContext(context.TODO(), msg)
+}
+
+// PrepareProofWithContext does the same thing as PrepareProof except carrying a context
+func (p *Worker) PrepareProofWithContext(ctx context.Context, msg []byte) chan struct {
+	*PoWork
+	error
+} {
 
 	toR := make(chan struct {
 		*PoWork
@@ -98,7 +107,7 @@ func (p *Worker) PrepareProof(msg []byte) chan struct {
 	}, 1)
 
 	go func() {
-		r, e := p.DoProofFor(msg)
+		r, e := p.doProof(ctx, msg)
 		toR <- struct {
 			*PoWork
 			error
@@ -115,8 +124,16 @@ func (p *Worker) SendProofToChannel(msg []byte, c chan struct {
 	*PoWork
 	error
 }) {
+	p.SendProofToChannelWithContext(context.TODO(), msg, c)
+}
+
+// SendProofToChannelWithContext does the same thing as SendProofToChannel except carrying a context
+func (p *Worker) SendProofToChannelWithContext(ctx context.Context, msg []byte, c chan struct {
+	*PoWork
+	error
+}) {
 	go func() {
-		r, e := p.DoProofFor(msg)
+		r, e := p.doProof(ctx, msg)
 		c <- struct {
 			*PoWork
 			error
@@ -129,14 +146,30 @@ func (p *Worker) DoProofForString(msg string) (*PoWork, error) {
 	return p.DoProofFor([]byte(msg))
 }
 
+// DoProofForStringWithContext does the same thing as DoProofForString except carrying a context
+func (p *Worker) DoProofForStringWithContext(ctx context.Context, msg string) (*PoWork, error) {
+	return p.doProof(ctx, []byte(msg))
+}
+
 // DoProofFor calculates a proof of work for a byte slice
 func (p *Worker) DoProofFor(msg []byte) (*PoWork, error) {
+	return p.doProof(context.TODO(), msg)
+}
+
+// DoProofForWithContext does the same thing as DoProofFor except carrying a context
+func (p *Worker) DoProofForWithContext(ctx context.Context, msg []byte) (*PoWork, error) {
+	return p.doProof(ctx, msg)
+}
+
+func (p *Worker) doProof(ctx context.Context, msg []byte) (*PoWork, error) {
 	toR := new(PoWork)
 	toR.msg = msg
 	toR.proof = 0
 	toR.requiredIterations = 0
 
-	timeoutChannel := time.After(time.Duration(p.maxWait) * time.Millisecond)
+	// timeoutChannel := time.After(time.Duration(p.maxWait) * time.Millisecond)
+	localCtx, cancelFunc := context.WithTimeout(ctx, time.Duration(p.maxWait)*time.Millisecond)
+	defer cancelFunc()
 
 	for {
 		res, err := p.ValidatePoWork(toR)
@@ -151,9 +184,9 @@ func (p *Worker) DoProofFor(msg []byte) (*PoWork, error) {
 		toR.proof++
 
 		select {
-		case <-timeoutChannel:
-			// timed out
-			return nil, errors.New("Timed out while calculating proof of work")
+		case <-localCtx.Done():
+			// canceled or timeout
+			return nil, localCtx.Err()
 		default:
 			// continue with the next iteration of the loop
 		}
